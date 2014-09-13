@@ -1,0 +1,7 @@
+<style>
+	
+</style>
+
+{% for dot in dots %}
+	<div class="dot" id="dot{{dot.pk}}" style="background:{{dot.color}};top:{{dot.ypos}}px;left:{{dot.xpos}}px"></div>
+{% endfor %}

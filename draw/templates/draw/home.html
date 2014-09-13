@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Draw</title>
+
+		<style>
+			#portrait {
+				position:absolute;
+				top:80px;
+				width:900px;
+				height:600px;
+				border:solid;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			.dot {
+				width: 20px;
+				height: 20px;
+				background: red;
+				-moz-border-radius: 50px;
+				-webkit-border-radius: 50px;
+				border-radius: 50px;
+				position: absolute;
+			}
+		</style>
+
+		<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+		<script>
+			var dotPks = [{{pkList}}];
+			var dots = []
+			$(document).ready(function() {
+				for(var i=0;i<dotPks.length;i++) {
+					dots[dots.length] = $("#dot"+dotPks[i]);
+				}
+				var timeout;
+				$("#portrait").on("mousemove", function(e) {
+					if(e.which == 1) {
+						var x = e.pageX - $(this).position().left - 10;
+						var y = e.pageY - $(this).position().top -10;
+						var pk = newServerDot(x, y, "blue");
+						draw(x, y, "red", pk);				    
+					 }
+					return false;
+				});
+				$(document).mouseup(function(){
+				    clearInterval(timeout);
+				    return false;
+				});
+				window.setInterval(function(){
+					getNewDots();
+				}, 50);
+
+			});
+			function getNewDots() {
+				$.ajax({
+				  type: "POST",
+				  url: "/",
+				  data: {dotPks:dotPks, csrfmiddlewaretoken: "{{csrf_token}}"},
+				  async:false,
+				  dataType: "json"
+				}).done(function(data) {
+					if(data != null) {
+						draw(parseInt(data["xpos"]), parseInt(data["ypos"]), data["color"], data["pk"]);
+					}
+				});
+			}
+			function draw(x, y, color, pk) {
+				$("#portrait").append("<div class=\"dot\" id=\"dot"+pk+"\"></div>");
+				var newDot = $("#dot"+pk);
+				newDot.css("top", y+"px");
+				newDot.css("left", x+"px");
+				newDot.css("color", color);
+				dots[dots.length] = newDot;
+				dotPks[dotPks.length] = parseInt(pk);
+			}
+			function newServerDot(x, y, color) {
+				var response;
+  				$.ajax({
+				  type: "POST",
+				  url: "/",
+				  data: {xpos: x, ypos: y, color: color, csrfmiddlewaretoken: "{{csrf_token}}"},
+				  async:false
+				}).done(function(data) {
+				    response = data;
+				});
+				return response;
+			}
+		</script>
+
+	</head>
+	<body>
+		<div id="portrait">
+			{% for dot in dots %}
+				<div class="dot" id="dot{{dot.pk}}" style="background:{{dot.color}};top:{{dot.ypos}}px;left:{{dot.xpos}}px"></div>
+			{% endfor %}
+		</div>
+
+	</body>
+
+
+
+</html>
